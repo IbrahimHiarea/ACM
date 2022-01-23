@@ -132,16 +132,43 @@
          if(n > 2)   cout<<n;
       }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+((Divisors of number)):
+***********************
+
+set<int> divisors;
+
+void getDivisors(int n){
+    for (int i = 1 ; i*i <= n ; i++){
+        if(n%i==0){
+            int x = n/i;
+            divisors.insert(i);
+            if(x!=i) divisors.insert(x);
+        }
+    }
+}
+
+
+((Divisors using sieve for 1->n number)):
+******************************************
+vector<vector<int>> allDivisors;
+
+void getDivisorsToN(int n){
+    for(int i=1 ; i<n ; i++)
+        for(int j=i ; j<n ; j+=i)
+            allDivisors[j].push_back(i);
+}
 ==========================================================================================================================================================================
 
                                                                            Graph
-                                                                        ----------
+                                                                        -----------
 (( DFS )) : 
 ***********
    int vis[nax];
-   void dfs(int u) {
-      vis[u] = 1;
-      for(auto v:adj[u]) {
+   void dfs(int i) {
+      vis[i] = 1;
+      for(auto v:a[i]) {
          if(!vis[v]) {
             dfs(v);
          }
@@ -174,17 +201,20 @@
 (( Dijkstra )) :
 ****************
 
-   int D[nax];
+   ll D[100005] , n ;
+   vector <pair<ll , ll>> a[100005];
+   ll path[100005];
    void dijkstra(int src){
       priority_queue<node, vector<node>, greater<node>> q;
-      fill(D, D+n, inf);
+      fill(D, D+n+1, oo);
       D[src]=0; q.push({0, src});
       while(!q.empty()) {
          auto [d, u] = q.top(); q.pop();
          if(d > D[u]) continue;
-         for(auto [v, w] : adj[u]) {
+         for(auto [v, w] : a[u]) {
             if(D[v] > D[u]+w) {
                D[v] = D[u]+w;
+               path[v] = u;
                q.push({D[v], v});
             }
          }
@@ -666,4 +696,186 @@ int main()
 }
 
 ==========================================================================================================================================================================
+                                                                        Segment-Tree
+                                                                     -------------------
+1- ((Segment Tree)) :
+*********************                                                                     
+#define left p<<1 , l , (l+r)>>1
+#define right p<<1|1 , ((l+r)>>1)+1 , r
 
+vector<int> seg(400100) , a(100100) , lazy(400100);
+
+int build(int p , int l , int r){
+    if(l==r) return seg[p] = a[l];
+    return seg[p] = (build(left) + build(right)); //to change
+}
+
+void push(int p){
+    if(!lazy[p]) return;
+    seg[p<<1] += lazy[p]; seg[p<<1|1] += lazy[p];
+    lazy[p<<1] += lazy[p]; lazy[p<<1|1] +=lazy[p];
+    lazy[p] = 0;
+}
+
+int update(int i , int j , int inc , int p , int l , int r){
+    if(j<l || r<i) return seg[p];
+    if(i<=l && r<=j) return lazy[p] += inc, seg[p] += inc; //to change
+    push(p);
+    return seg[p] = (update(i , j , inc , left) + update(i , j , inc , right)); //to change
+}
+
+int query (int i , int j , int p , int l , int r){
+    if(j<l  ||  r<i) return inf; // to change
+    if(i<=l && r<=j) return seg[p];
+    push(p);
+    return (query(i , j , left) + query(i , j , right)); //to change
+}
+
+//to compress the array
+void compress(vector<int> &vec) {
+    vector<int> val(vec.begin(), vec.end());
+    sort(val.begin(), val.end());
+    val.erase(unique(val.begin(), val.end()), val.end());
+    for(auto &x:vec) x = lower_bound(val.begin(), val.end(), x) - val.begin();
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+2- ((Sparse-Table)) : 
+*********************
+
+// to build and answer the query:
+vector<vector<int>> st(20 , vector<int> (100100));
+vector<int> a(100100);
+int n;
+
+void build(){
+    for(int i = 0 ; i < n ; i++) st[0][i] = a[i]; // to change
+    for(int j = 1 ; 1<<j <= n ; j++)
+        for(int i = 0 ; i+(1<<j) <= n ; i++)
+            st[j][i] = temp (st[j-1][i] , st[j-1][i+(1<<j-1)]); // to change
+}
+
+int inline get (int l , int r){
+    int k = log2(r-l+1);
+    return temp (st[k][l] , st[k][r-(1<<k)+1]);  //to change
+}
+
+
+// to build and answer range sum queries with complexity log2(n) :
+
+vector<vector<int>> st(20 , vector<int> (100100));
+
+void build(){
+    for(int i = 0 ; i < n ; i++) st[0][i] = a[i];
+    for (int j = 1 ; 1<<j <= n ; j++)
+        for(int i = 0 ; i+(1<<j) <= n ; i++)
+            st[j][i] = st[j-1][i] + st[j-1][i+(1<<j-1)];
+}
+
+ll inline get (int l , int r){
+    ll sum = 0;
+    for(int j = 20 ; j >= 0 ; j--){
+        if((1<<j) <= r-l+1){
+            sum += st[j][l];
+            l += 1<<j;
+        }
+    }
+    return sum;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+3-((2D preffix)) : 
+******************
+vector<vector<int>> prefix2d(1100 , vector<int>(1100)) , a(1000 , vector<int> (1000));
+
+void generate_prefix(int n , int m){
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < m; j++)
+            prefix2d[i][j] = a[i][j] + prefix2d[i-1][j] + 
+                            prefix2d[i][j-1] - prefix2d[i-1][j-1];
+}
+
+int get_prefix(int x1 , int y1 , int x2 , int y2){
+    return (prefix2d[x2][y2] - prefix2d[x2][y1-1] - prefix2d[x1-1][y2] + prefix2d[x1-1][y1-1]);
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+4- ((Fenwick-Tree(BIT))) : 
+**************************
+// to answer point update and range query
+//           range update and point query:
+
+struct FenwickTree {
+    vector<int> bit;
+    int n;
+
+    FenwickTree(int n) {
+        this->n = n;
+        bit.assign(n, 0);
+    }
+
+    FenwickTree(vector<int> a) : FenwickTree(a.size()) {
+        for (size_t i = 0; i < a.size(); i++)
+            update(i, a[i]);
+    }
+
+    int query(int r) {
+        int ret = 0;
+        for (; r >= 0; r = (r & (r + 1)) - 1)
+            ret += bit[r]; // to change
+        return ret;
+    }
+
+    int query(int l, int r) {
+        return query(r) - query(l - 1);
+    }
+
+    void update(int idx, int delta) {
+        for (; idx < n; idx = idx | (idx + 1))
+            bit[idx] += delta; //to change
+    }
+    
+    void update(int l, int r, int val) {
+        update(l, val);
+        update(r + 1, -val);
+    }
+};
+
+
+// to answer point update and 2d array query:
+
+struct FenwickTree2D {
+    vector<vector<int>> bit;
+    int n , m;
+
+    FenwickTree2D(int n , int m) {
+        this->n = n;
+        this->m = m;
+        bit.assign(n , vector<int>(m , 0));
+    }
+
+    FenwickTree2D(vector<vector<int>> a , int n , int m) : FenwickTree2D(n , m) {
+        for (size_t i = 0; i < n; i++)
+            for (size_t j = 0; j < m; j++)
+                update(i , j , a[i][j]);
+    }
+
+    int query(int x, int y) {
+        int ret = 0;
+        for (int i = x; i >= 0; i = (i & (i + 1)) - 1)
+            for (int j = y; j >= 0; j = (j & (j + 1)) - 1)
+                ret += bit[i][j];
+        return ret;
+    }
+
+    void update(int x, int y, int delta) {
+        for (int i = x; i < n; i = i | (i + 1))
+            for (int j = y; j < m; j = j | (j + 1))
+                bit[i][j] += delta;
+    }
+};
+
+==========================================================================================================================================================================
