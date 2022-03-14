@@ -49,19 +49,19 @@
 (( Prime )):
 ************
 1- sieve : 
-   int isPrime[1000001];
-   void sieve(){
-      for(int i=1; i<=1000000; i++){
-         isPrime[i]=1;
-      }
-      isPrime[1]=0;
-      for(int i=1; i<=1000; i++){
-         if(isPrime[i]==1){
-            for(int j=i*i; j<=1000000; j+=i)
-               isPrime[j]=0;
-         }
-      }
-   }
+    int isPrime[1000001];
+    void sieve(){
+        for(int i=1; i<=1000000; i++){
+            isPrime[i]=1;
+        }
+        isPrime[1]=0;
+        for(int i=1; i<=1000; i++){
+            if(isPrime[i]==1){
+                for(int j=i*i; j<=1000000; j+=i)
+                    isPrime[j]=0;
+            }
+        }
+    }
 2- Nive Approach : O(n)
    void checkPrime(int n){
       int count = 0 ;
@@ -109,6 +109,18 @@
          return res;
       }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+((Fast Power)) : 
+****************
+ll fastpow(ll a,ll n){
+    if(!n)
+        return 1;
+    ll mul = fastpow(a,n/2);
+    mul = (mul*mul)%MOD;
+    if(n&1)
+        mul = (a*mul)%MOD;
+    return mul;
+}
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 (( Factorial )) :
@@ -163,64 +175,275 @@ void getDivisorsToN(int n){
 
                                                                            Graph
                                                                         -----------
+//       R   L   D    U
+int X[]={0 , 0 , 1 , -1};
+int Y[]={1 , -1 , 0 , 0};
+for(int i=0;i<4;i++){
+    int x = + X[i];
+    int y = + Y[i];
+}
 (( DFS )) : 
 ***********
-   int vis[nax];
-   void dfs(int i) {
-      vis[i] = 1;
-      for(auto v:a[i]) {
-         if(!vis[v]) {
-            dfs(v);
-         }
-      }
-   }
+    int vis[nax];
+    void dfs(int i) {
+        vis[i] = 1;
+        for(auto v:a[i]) {
+            if(!vis[v]) {
+                dfs(v);
+            }
+        }
+    }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 (( BFS )) :
 ***********
-   int D[nax];
-   void bfs(int src) {
-      for(int i=0 ; i<n ; i++) D[i] = inf;
-      queue<int> q;
-      q.push(src); D[src]=0;
-      while(!q.empty()) {
-         int u = q.front();
-         q.pop();
-         for(auto v:adj[u]) {
-            if(D[v] == inf) {
-               D[v] = D[u] + 1;
-               q.push(v);
+    int D[nax];
+    void bfs(int src) {
+        for(int i=0 ; i<=n ; i++) D[i] = inf;
+        queue<int> q;
+        q.push(src); D[src]=0;
+        while(!q.empty()){
+            int u = q.front();
+            q.pop();
+            for(auto v:a[u]){
+                if(D[v] == inf){
+                    D[v] = D[u] + 1;
+                    q.push(v);
+                }
             }
-         }
-      }
-   }
+        }
+    }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-(( Dijkstra )) :
+(( Dijkstra )) : be carefull about the node(tuple) ll or int and the array D
 ****************
 
-   ll D[100005] , n ;
-   vector <pair<ll , ll>> a[100005];
-   ll path[100005];
-   void dijkstra(int src){
-      priority_queue<node, vector<node>, greater<node>> q;
-      fill(D, D+n+1, oo);
-      D[src]=0; q.push({0, src});
-      while(!q.empty()) {
-         auto [d, u] = q.top(); q.pop();
-         if(d > D[u]) continue;
-         for(auto [v, w] : a[u]) {
-            if(D[v] > D[u]+w) {
-               D[v] = D[u]+w;
-               path[v] = u;
-               q.push({D[v], v});
+    ll D[100005] , n ;
+    vector <pair<ll , ll>> a[100005];
+    ll path[100005];
+    void dijkstra(int src){
+        priority_queue<node, vector<node>, greater<node>> q;
+        fill(D, D+n+1, oo);
+        D[src]=0; q.push({0, src});
+        while(!q.empty()) {
+            auto [d, u] = q.top(); q.pop();
+            if(d > D[u]) continue;
+            for(auto [v, w] : a[u]) {
+                if(D[v] > D[u]+w) {
+                    D[v] = D[u]+w;
+                    path[v] = u;
+                    q.push({D[v], v});
+                }
             }
-         }
-      }
-   }
+        }
+    }
 
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+1 - ((Labyrinth)) : short path between to point with path : 
+*******************
+//       R   L   D    U
+int X[]={0 , 0 , 1 , -1};
+int Y[]={1 , -1 , 0 , 0};
+char a[1001][1001];
+int vis[1001][1001] , n , m , counter = 0;
+pair<int,int> st , ed , path[1001][1001];
+bool flag = false;
+string s = "";
+void bfs(int sta , int edd) {
+    for(int i=0;i<1001;i++)
+        for(int j=0;j<1001;j++)
+            vis[i][j] = inf , path[i][j] = {-1,-1};
+    queue<pair<int,int>> q;
+    q.push({sta,edd}); 
+    vis[sta][edd]=0;
+    while(!q.empty()) {
+        int i = q.front().first , j = q.front().second;
+        q.pop();
+        for(int k=0;k<4;k++){
+            int x = i + X[k];
+            int y = j + Y[k];
+            if(vis[x][y] == inf  &&  a[x][y] != '#'  &&  x >= 0  &&  x < n   &&  y >= 0  &&  y < m){
+                vis[x][y] = vis[i][j] + 1;
+                path[x][y] = {i,j};
+                q.push({x,y});
+            }
+        }
+    }
+}
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+    int t = 1;
+    // cin>>t;
+    while(t--){
+        cin>>n>>m;
+        for(int i=0;i<n;i++){
+            for(int j=0;j<m;j++){
+                cin>>a[i][j];
+                if(a[i][j] == 'A')      st.first = i , st.second = j;
+                else if(a[i][j] == 'B')     ed.first = i , ed.second = j;
+            }
+        }
+        bfs(st.first,st.second);
+        if(vis[ed.first][ed.second] == inf)     cout<<"NO"<<endl;
+        else{
+            cout<<"YES"<<endl<<vis[ed.first][ed.second]<<Endl;
+            pair <int,int> b = ed , temp;
+            while(true){
+                temp = path[b.first][b.second];
+                if(temp.first == -1  && temp.second == -1)    break;
+                if(b.first > temp.first)    s.push_back('D');
+                else if(b.first < temp.first)   s.push_back('U');
+                else if(b.second > temp.second) s.push_back('R');
+                else                            s.push_back('L');
+                b = temp;
+            }
+            for(int i=s.size()-1;i>=0;i--)  cout<<s[i];
+            cout<<endl;
+        }        
+    }
+    return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+2 -((Round Trip)) : find a cycle in graph of length more than 2 with path
+*******************
+vector <int> a[100001];
+int n , m , root = -1 , leaf = -1;
+int vis[nax] , path[nax];
+bool flag = false;
+vector <int> ans;
+void dfs(int i , int father){
+    vis[i] = 1;
+    for(auto v:a[i]){
+        if(!vis[v]){
+            path[v] = i;
+            dfs(v,i);
+        }
+        else if(v == father) continue;
+        else if(!flag){
+            flag = true , root = v , leaf = i;
+        }
+    }
+}
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+    int t = 1;
+    // cin>>t;
+    while(t--){
+        cin>>n>>m;
+        for(int i=0;i<m;i++){
+            int x , y ; 
+            cin>>x>>y;
+            a[x].push_back(y);
+            a[y].push_back(x);
+        }   
+        for(int i=1;i<=n;i++){
+            if(!vis[i]) dfs(i,0);
+            if(flag)    break;
+        }
+        if(!flag)   cout<<"IMPOSSIBLE"<<endl;
+        else{
+            ans.push_back(root);
+            int i = leaf;
+            while(i != root){
+                ans.push_back(i);
+                i = path[i];
+            }
+            ans.push_back(i);
+            cout<<ans.size()<<endl;
+            for(int i=ans.size()-1;i>=0;i--)    cout<<ans[i]<<" ";
+            cout<<endl;
+        }
+    }
+    return 0;
+}
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+3 - ((High Score)) : Single Sorce Longest Path Algorithm (SSLP) (Bellman Ford's Algorithm)
+********************
+struct triplet{
+	int first;
+	int second;
+	int third;
+};
+ 
+int n, m;	
+vector<triplet> edges;
+vector<int> dist;
+ 
+void bellman_ford()
+{
+	for(int i = 1; i < n; ++i)
+	{
+		for(auto e: edges)
+		{
+			int u = e.first;
+			int v = e.second;
+			int d = e.third;
+			if(dist[u] == oo) continue;
+			dist[v] = min(dist[v], d+dist[u]);
+			dist[v] = max(dist[v], (ll)-oo);
+		}
+	} // n relaxations
+ 
+	for(int i = 1; i < n; ++i)
+	{
+		for(auto e: edges)
+		{
+			int u = e.first;
+			int v = e.second;
+			int d = e.third;
+			if(dist[u] == oo) continue;
+			dist[v] = max(dist[v], (ll)-oo);
+			if(dist[u]+d < dist[v])
+			{
+				dist[v] = -oo;
+			}
+		}
+	}
+}
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+    int t = 1;
+    // cin>>t;
+    while(t--){
+        cin >> n >> m;
+        dist.resize(n+1);
+        edges.resize(m);
+        for(int i = 0; i < m; ++i)
+        {
+            struct triplet inp;
+            cin >> inp.first >> inp.second >> inp.third;
+            inp.third *= -1; 
+            edges[i] = inp;
+        }
+    
+        for(int i = 2; i <= n; ++i)
+        {
+            dist[i] = oo;
+        }
+    
+        bellman_ford();
+        if(dist[n] == -oo)
+        {
+            cout << -1 << endl;
+            return 0;
+        } 
+        cout << dist[n] * (-1) << endl;
+    }
+    return 0;
+}
 ==========================================================================================================================================================================
 
                                                                         Tree
@@ -879,3 +1102,205 @@ struct FenwickTree2D {
 };
 
 ==========================================================================================================================================================================
+
+                                                                            Sort    
+                                                                        ------------
+1 - ((Restaurant Customers)) : 
+******************************
+
+int n;
+cin>>n;
+vector <pair<int,int>> a;
+for(int i=0;i<n;i++){
+    int x , y;
+    cin>>x>>y;
+    a.push_back({x,1});
+    a.push_back({y,-1});
+}
+sortt(a);
+int counter = 0 , maxi = -inf;
+for(int i=0;i<a.size();i++){    
+    counter+=a[i].second;
+    // cout<<counter<<endl;
+    maxi = max(maxi,counter);
+}
+cout<<maxi<<endl;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+2 - ((Movie Festival)) :
+************************
+
+int n;
+cin>>n;
+vector <pair<int,int>> a(n);
+for(int i=0;i<n;i++)    cin>>a[i].second>>a[i].first;
+sortt(a);
+int counter = 0 , last = -1;
+for(int i=0;i<n;i++){
+    if(a[i].second >= last){
+        last = a[i].first;
+        counter++;
+    }
+}
+cout<<counter<<endl;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+3 - ((Maximum Subarray Sum)) :
+******************************
+int n;
+cin>>n;
+vector <ll> a(n);
+for(int i=0;i<n;i++)    cin>>a[i];
+ll last = -oo , maxi = -oo;
+for(int i=0;i<n;i++){
+    last = max(last+a[i],a[i]);
+    maxi = max(maxi,last);
+}
+cout<<maxi<<endl;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+4 - ((Missing Coin Sum)) :
+**************************
+
+int n;
+cin>>n;
+vector <int> a(n);
+for(int i=0;i<n;i++)    cin>>a[i];
+sortt(a);
+ll counter = 1;
+for(int i=0;i<n;i++){
+    if(counter < a[i])  break;
+    counter+=a[i];
+}
+cout<<counter<<endl;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+5 - ((Playlist)) : 
+******************
+int n;
+cin>>n;
+vector <int> a(n);
+map<int,int> mp;
+for(int i=0;i<n;i++)    cin>>a[i];
+int counter = 0 , i = 0 , j = 0 , maxi = -inf ;
+while(i < n  &&  j < n){
+    int x = mp[a[j]];
+    if(x == 0){
+        counter++;
+        mp[a[j]] = 1;
+        j++;
+    }
+    else{
+        mp[a[i]] = 0;
+        counter--;
+        i++;
+    }
+    maxi = max(maxi,counter);
+}
+cout<<maxi<<endl;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+6 - ((Traffic Lights)) :
+************************
+int n , m;
+cin>>n>>m;
+vector <int> a(m)  , ans;
+for(int i=0;i<m;i++)    cin>>a[i];
+set <int> st;
+st.insert(0);
+st.insert(n);
+multiset <int> mp;
+mp.insert(n);
+for(int i=0;i<m;i++){
+    auto it = st.upper_bound(a[i]);
+    int r = *it , l = *--it;
+    st.insert(a[i]);
+    it = mp.find(r-l);
+    mp.erase(it);
+    mp.insert(r-a[i]);
+    mp.insert(a[i]-l);
+    ans.push_back(*mp.rbegin());
+}
+for(auto it : ans)  cout<<it<<" ";
+cout<<endl;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+7 - ((Subarray Sums I)) :                                  slide window algorithm
+*************************
+int n , k;
+        cin>>n>>k;
+        vector <int> a(n);
+        for(int i=0;i<n;i++)    cin>>a[i];
+        ll counter = 0 , sum = 0  , i = 0 , j = 0;
+        sum = a[0];
+        while(i < n  &&  j < n){
+            if(sum > k){
+                sum-= a[i];
+                i++;
+            }
+            else if(sum == k){
+                sum-=a[i];
+                i++;
+                counter++;
+            }
+            else{
+                j++;
+                sum+=a[j];
+            }
+        }
+        // cout<<sum<<Endl;
+        // cout<<i<<" "<<j<<endl;
+        if(sum == k)    counter++;
+        cout<<counter<<endl;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+8 - ((Subarray Sums II)) : 
+**************************
+int n , k;
+cin>>n>>k;
+vector <ll> a(n) , pre(n);
+ll counter = 0 , sum = 0;
+for(int i=0;i<n;i++){
+    cin>>a[i];
+    sum+=a[i];
+    pre[i] = sum;
+}
+map <ll,int> mp;
+mp[0]++;
+for(int i=0;i<n;i++){
+    counter += mp[pre[i] - k];
+    mp[pre[i]]++;
+}
+cout<<counter<<endl;
+
+==========================================================================================================================================================================
+
+                                                                            Math    
+                                                                        ------------
+1 - ((Common Divisors)) :   get the gcd for all pair in array and get the maximum
+*************************
+int n;
+cin>>n;
+for(int i=0;i<n;i++){
+    int x;
+    cin>>x;
+    a[x]++;
+}
+for(int i=1000000;i>0;i--){
+    int counter = 0;
+    for(int j=i;j<=1000000;j+=i)    counter+=a[j];
+    if(counter > 1){
+        cout<<i<<endl;
+        return 0;
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
