@@ -7,6 +7,7 @@
 #define right p<<1|1 , ((l+r)>>1)+1 , r
 #define coutt(x)     printf("%d\n", x);
 #define binary(x,n)     std::string str = std::bitset<n>(x).to_string()
+#define comma(ans,n)    setprecision(n)<<fixed<<ans<<endl;
 #define point complex <int>
 
 printf("%d %d\n%d %d\n", j, i, n - j + 1, m - i + 1);
@@ -33,8 +34,8 @@ printf("%d %d\n%d %d\n", j, i, n - j + 1, m - i + 1);
             }
          }
    }
-   ll lcm(ll a, ll b){
-        return a / __gcd(a,b) * b; 
+    ll lcm(ll a, ll b){
+        return (a * b) / __gcd(a,b); 
     }   
    4- GCD(m.a,m.b) = m * GCD(a,b)
    5- GCD(a/m,b/m) = GCD(a,b)/m
@@ -123,6 +124,8 @@ printf("%d %d\n%d %d\n", j, i, n - j + 1, m - i + 1);
          }
          return res;
       }
+    3 - n mod x = y mod n
+        if(x > y)   n = (x + y)
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ((Fast Power)) : 
@@ -159,6 +162,21 @@ ll fastpow(ll a,ll n){
          if(n > 2)   cout<<n;
       }
 
+    int factorization(int x) // O( sqrt (x) )
+    {
+        vector<int> v;
+        for (int i = 2; i * i <= x; i++)
+        {
+            while (x % i == 0)
+            {
+                x /= i;
+                v.push_back(i);
+            }
+        }
+        if (x > 1)
+            v.push_back(x);
+        return v.size();
+    }
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 ((Divisors of number)):
@@ -192,8 +210,8 @@ void getDivisorsToN(int n){
 ((Combinatorics)):
 *****************
 
-const int N = 2020;
-const int Mod = 1e9 + 7;
+const int N = 2020   //  To Change ;
+const int Mod = 1e9 + 7  //  To Change;
  
 int Inv[N];
 int Fact[N];
@@ -257,9 +275,10 @@ void PreCalcMod()
 //       R   L   D    U
 int X[]={0 , 0 , 1 , -1};
 int Y[]={1 , -1 , 0 , 0};
-for(int i=0;i<4;i++){
-    int x = + X[i];
-    int y = + Y[i];
+for(int k=0;k<4;k++){
+    int x = i + X[k];
+    int y = j + Y[k];
+    if(!vis[x][y]  &&  x >= 0  &&  x < n  &&  y >= 0  &&  y < m )    dfs(x,y);
 }
 (( DFS )) : 
 ***********
@@ -294,6 +313,34 @@ for(int i=0;i<4;i++){
         }
     }
 
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+(( Multi Source BFS )) :
+************************
+int D[nax];
+set <int> source;
+
+void bfs() {
+    for(int i=0 ; i<=n ; i++) D[i] = inf;
+    queue <int> q;
+    for(auto it : source){
+        q.push(it);
+        D[it] = 0;
+    }
+    while(!q.empty()){
+        int u = q.front();
+        q.pop();
+        for(auto v:a[u]){
+            if(D[v] == inf){
+                D[v] = D[u] + 1;
+                q.push(v);
+            }
+        }
+    }
+}
+
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
 (( DSU )) :
@@ -315,6 +362,7 @@ struct DSU{
         return x;
     }
     // merge v to u
+    // v parent for the first time
     void merge(int u, int v) {
         int a=find(u);
         int b=find(v);
@@ -1083,7 +1131,7 @@ int main()
 #define left p<<1 , l , (l+r)>>1
 #define right p<<1|1 , ((l+r)>>1)+1 , r
 
-vector<int> seg(400100) , a(100100) , lazy(400100);
+vector <int> seg(400100) , a(100100) , lazy(400100);
 
 int build(int p , int l , int r){
     if(l==r) return seg[p] = a[l];
@@ -1095,11 +1143,16 @@ void push(int p){
     seg[p<<1] += lazy[p]; seg[p<<1|1] += lazy[p];
     lazy[p<<1] += lazy[p]; lazy[p<<1|1] +=lazy[p];
     lazy[p] = 0;
+    // if(!lazy[p]) return;
+    // seg[p<<1] += (lazy[p]*(((l+r)>>1)-l+1)); 
+    // seg[p<<1|1] += (lazy[p]*(r-(((l+r)>>1)+1)+1));
+    // lazy[p<<1] += lazy[p]; lazy[p<<1|1] +=lazy[p];
+    // lazy[p] = 0;
 }
 
 int update(int i , int j , int inc , int p , int l , int r){
     if(j<l || r<i) return seg[p];
-    if(i<=l && r<=j) return lazy[p] += inc, seg[p] += inc; //to change
+    if(i<=l && r<=j) return lazy[p] += inc, seg[p] += inc; //to change seg[p] += (inc*(r-l+1));
     push(p);
     return seg[p] = (update(i , j , inc , left) + update(i , j , inc , right)); //to change
 }
@@ -1117,6 +1170,98 @@ void compress(vector<int> &vec) {
     sort(val.begin(), val.end());
     val.erase(unique(val.begin(), val.end()), val.end());
     for(auto &x:vec) x = lower_bound(val.begin(), val.end(), x) - val.begin();
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+Finding subsegments with the maximal sum : 
+------------------------------------------
+
+struct Node {
+    ll sum, pref, suff, ans;
+};
+
+vector <Node> seg(200008);
+vector <ll> a(50002);
+int n , q;
+
+Node combine(Node l, Node r) {
+    Node res;
+    res.sum = l.sum + r.sum;
+    res.pref = max(l.pref, l.sum + r.pref);
+    res.suff = max(r.suff, r.sum + l.suff);
+    res.ans = max(max(l.ans, r.ans), l.suff + r.pref);
+    return res;
+}
+
+Node make_Node(ll val) {
+    Node res;
+    res.ans = res.pref = res.suff = res.sum = val;
+    return res;
+}
+
+Node build(int p , int l , int r){
+    if(l==r)    return seg[p] = make_Node(a[l]);
+    return seg[p] = combine(build(left) , build(right)); //to change
+}
+
+Node update(int i , int j , ll inc , int p , int l , int r){
+    if(j<l || r<i) return seg[p];
+    if(i<=l && r<=j) return seg[p] = make_Node(inc); //to change
+    return seg[p] = combine(update(i , j , inc , left) , update(i , j , inc , right)); //to change
+}
+
+Node query (int i , int j , int p , int l , int r){
+    if(j<l  ||  r<i) return make_Node(-inf); // to change
+    if(i<=l && r<=j) return seg[p];
+    return combine(query(i , j , left) , query(i , j , right)); //to change
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+count the numbers that bigger than val in range : 
+-------------------------------------------------
+
+vector <int> seg[30000*4] , a(30000);
+int n , q;
+
+void build(int p , int l , int r){
+    if(l==r){
+        seg[p].push_back(a[l]);
+        return;
+    }
+    build(left);
+    build(right);
+    // Merge Sort for two sorted array
+    seg[p].resize(seg[2*p].size() + seg[2*p+1].size());
+    int i = 0 , j = 0 , k = 0;
+    while(j < seg[p*2].size() && k < seg[p*2+1].size()){
+		if(seg[p*2][j] < seg[p*2+1][k]){
+			seg[p][i] = seg[p*2][j];
+            i ++ , j ++;
+		} 
+        else{
+			seg[p][i] = seg[p*2+1][k];
+		    i ++ , k ++;
+		}
+	}
+	while(j < seg[p*2].size()){
+		seg[p][i] = seg[p*2][j];
+        i ++ , j ++;
+	}
+	while(k < seg[p*2+1].size()){
+		seg[p][i] = seg[p*2+1][k];
+		i ++ , k ++;
+	}
+}
+
+int query (int i , int j , int p , int l , int r , int val){
+    if(j<l  ||  r<i) return 0; // to change
+    if(i<=l && r<=j){
+        return seg[p].end() - upper_bound(seg[p].begin() , seg[p].end() , val);  // To change
+    }
+    return (query(i , j , left , val) + query(i , j , right , val)); //to change
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1257,6 +1402,58 @@ struct FenwickTree2D {
                 bit[i][j] += delta;
     }
 };
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+5- ((MO's Algorithm))) : 
+**************************
+int n , q , block_size;
+ll ans = 0;
+vector <int> a(30010) , mp(nax) , answers(nax);
+
+struct Query {
+    int l, r, idx;
+    bool operator<(Query other) const
+    {
+        return make_pair(l / block_size, r) <
+               make_pair(other.l / block_size, other.r);
+    }
+};
+
+void remove(int idx){   // TODO: remove value at idx from data structure
+    
+}
+void add(int idx){      // TODO: add value at idx from data structure
+    
+}
+int get_answer(){  } // TODO: Return the answer value
+
+main : 
+
+    vector <Query> query;
+    block_size = (int) sqrt (n + .0) + 1;
+    sort(query.begin(),query.end());
+    int cur_l = 0 , cur_r = -1;
+    for(auto q : query) {
+        while(cur_l > q.l  &&  cur_l >= 0){
+            cur_l--;
+            add(a[cur_l]);
+        }
+        while(cur_r < q.r  &&  cur_r < n){
+            cur_r++;
+            add(a[cur_r]);
+        }
+        while(cur_l < q.l  &&  cur_l < n){
+            remove(a[cur_l]);
+            cur_l++;
+        }
+        while(cur_r > q.r  &&  cur_r >= 0){
+            remove(a[cur_r]);
+            cur_r--;
+        }
+        answers[q.idx] = get_answer();
+    }
+    for(int i=0;i<q;i++)  cout << answers[i] << endl;
 
 ==========================================================================================================================================================================
 
@@ -1457,5 +1654,137 @@ for(int i=1000000;i>0;i--){
     }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////////
+==========================================================================================================================================================================
 
+
+                                                                            Hash    
+                                                                        ------------
+// single HASH:
+
+struct Hash{
+	const int p = 1333; // 31 , 53 , 1331 , 1333 , 137
+	const int m = 1e9+9; // 1e9+7 , 1e9+9
+	vector<ll> pow, h;
+	
+	void build(string s) {
+		int n = s.size();
+		pow.resize(n);
+		h.resize(n);
+		pow[0]=1;
+		for(int i=1 ; i<n ; i++) pow[i] = pow[i-1]*p%m;
+		h[0]=s[0]-'0'+1;
+		for(int i=1 ; i<n ; i++) h[i] = (h[i-1]*p + s[i]-'0'+1)%m;
+	}
+	
+    void add(string s){
+        for (int i = 0; i < s.size(); i++) pow.push_back(pow.back()*p%m);
+        for (int i = 0; i < s.size(); i++) h.push_back((h.back()*p + s[i]-'0'+1)%m);
+    }
+
+	ll getHash(int i, int j) {
+		ll ret = h[j];
+		if(i) ret -= h[i-1] * pow[j-i+1];
+		return (ret%m + m)%m;
+	}
+};
+
+
+// double HASH:
+
+struct DoubleHash{
+	const int p1=1333, p2=137; // 53, 1331 , 137
+	const int m1=1e9+9, m2=1e9+7; // 1e9+7
+	vector<ll> pow1, pow2, h1, h2;
+
+	void build(string s) {
+		int n = s.size();
+
+		pow1.resize(n);
+		h1.resize(n);
+		pow1[0]=1;
+		for(int i=1 ; i<n ; i++) pow1[i] = pow1[i-1]*p1%m1;
+		h1[0]=s[0]-'a'+1;
+		for(int i=1 ; i<n ; i++) h1[i] = (h1[i-1]*p1 + s[i]-'a'+1)%m1;
+
+		pow2.resize(n);
+		h2.resize(n);
+		pow2[0]=1;
+		for(int i=1 ; i<n ; i++) pow2[i] = pow2[i-1]*p2%m2;
+		h2[0]=s[0]-'a'+1;
+		for(int i=1 ; i<n ; i++) h2[i] = (h2[i-1]*p2 + s[i]-'a'+1)%m2;
+	}
+	
+	pair<int, int> getHash(int i, int j){
+		ll a = h1[j];
+		if(i) a -= h1[i-1] * pow1[j-i+1];
+		a = (a%m1 + m1)%m1;
+
+		ll b = h2[j];
+		if(i) b -= h2[i-1] * pow2[j-i+1];
+		b = (b%m2 + m2)%m2;
+
+		return make_pair(a,b);
+	}
+};
+
+
+==========================================================================================================================================================================
+
+
+                                                                            Trie    
+                                                                        ------------
+
+struct no {
+    no* nxt[26] = {nullptr};
+    int cnt = 0;
+};
+
+void add(no* & cur , int i , string& s ,  int n)
+{
+    if(cur == nullptr) cur = new no;
+
+    if(i == n)
+    {
+        (cur -> cnt)++;
+        return;
+    }
+    int edge = s[i] - 'a';
+    add(cur->nxt[edge] , i+1 , s , n);
+}
+
+bool search(no* cur , int i , string& s , int n)
+{
+    if(cur == nullptr) return false;
+
+    if(i == n)
+    {
+        if(cur -> cnt >= 1) return true;
+        return false;
+    }
+    int edge = s[i] - 'a';
+    search(cur->nxt[edge] , i+1 , s , n);
+}
+
+// string s is for sure stored in the tree,
+// if it could not be stored then search for it first
+void del(no* & cur , int i , string& s , int n)
+{
+    if(i == n)
+    {
+        (cur -> cnt)--;
+    }
+    else
+    {
+        int edge = s[i] - 'a';
+        del(cur->nxt[edge] , i+1 , s , n);
+    }
+
+    bool noEdges = true;
+    for(int i = 0;i < 26; i++) if(cur->nxt[i] != nullptr) {noEdges = false; break;}
+
+    if(noEdges && (cur -> cnt) == 0)
+    {
+        delete cur;
+        cur = nullptr;
+    }
+}
