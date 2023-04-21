@@ -1,4 +1,4 @@
-// freopen(x, "r", stdin)
+// freopen("name", "r", stdin)
 
 #define node tuple<int,int>
 #define pi 3.14159265359
@@ -824,23 +824,278 @@ vector <Edge> edges;
 int cost = 0;
 
 
+main :
+------
 
-for(int i=0;i<m;i++){
-    int x , y , z;
-    cin >> x >> y >> z;
-    Edge temp;
-    temp.u = x , temp.v = y , temp.weight = z;
-    edges.push_back(temp);
+    for(int i=0;i<m;i++){
+        int x , y , z;
+        cin >> x >> y >> z;
+        Edge temp;
+        temp.u = x , temp.v = y , temp.weight = z;
+        edges.push_back(temp);
+    }
+    sortt(edges);
+    DSU dsu(n+10);
+    for(int i=0;i<m;i++){
+        auto it = edges[i];
+        if(dsu.find(it.u) != dsu.find(it.v))
+            cost += it.weight;
+            dsu.merge(it.v,it.u);
+        }
+    }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+((Mo's on Tree)) :   
+******************
+
+1 - This struct solve query not dynamic on tree to answer about subtree
+
+int n , q , block_size , timer = 1;
+vector <int> tree[nax];
+/**
+ * a    : Euler array size 2 * n;
+ * L[i] : The left index of node in Euler array 
+ * R[i] : The right indx of node in Euler array
+*/
+vector <int> L(nax) , R(nax) , a(nax);
+vector <int> F(nax) , FF(nax);
+vector <int> answers(nax);
+
+struct Query {
+    int l, r, k, idx;
+    bool operator<(Query other) const
+    {
+        return make_pair(l / block_size, r) <
+               make_pair(other.l / block_size, other.r);
+    }
+};
+
+void remove(int idx){   // TODO: remove value idx from data structure
+    
 }
-sortt(edges);
-DSU dsu(n+10);
-for(int i=0;i<m;i++){
-    auto it = edges[i];
-    if(dsu.find(it.u) != dsu.find(it.v))
-        cost += it.weight;
-        dsu.merge(it.v,it.u);
+void add(int idx){      // TODO: add value idx from data structure
+    
+}
+int get_answer(){       // TODO: Return the answer value
+    
+} 
+
+//  Euler DFS
+void dfs(int node , int par){
+    L[node] = timer;
+    a[timer] = node;
+    timer++;
+    for(int child : tree[node])
+        if(child != par)
+            dfs(child , node);
+    R[node] = timer;
+    a[timer] = node;
+    timer++;
+}
+ 
+
+
+main : 
+    cin >> n >> q;
+    for(int i=1;i<n;i++){
+        int x , y;
+        cin >> x >> y;
+        tree[x].push_back(y);
+        tree[y].push_back(x);
+    }
+    timer = 1;
+
+    // Root
+    dfs(1,-1);
+    
+    vector <Query> query;
+    block_size = (int) sqrt (n + .0) + 1;
+    for(int i=0;i<q;i++){
+        int sub , k;
+        cin >> sub >> k; 
+        Query x;
+        x.l = L[sub] , x.r = R[sub] , x.idx = i , x.k = k;
+        query.push_back(x);
+    }
+
+    sort(query.begin(),query.end());
+    int cur_l = 1 , cur_r = 0;
+    for(auto q : query) {
+        while(cur_l > q.l){
+            cur_l--;
+            add(a[cur_l]);
+        }
+        while(cur_r < q.r){
+            cur_r++;
+            add(a[cur_r]);
+        }
+        while(cur_l < q.l){
+            remove(a[cur_l]);
+            cur_l++;
+        }
+        while(cur_r > q.r){
+            remove(a[cur_r]);
+            cur_r--;
+        }
+        answers[q.idx] = get_answer();
+    }
+    for(int i=0;i<q;i++)    cout << answers[i] << endl;
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+2 - This struct solve query not dynamic on tree to answer about path from u to v
+
+int n , q , block_size , timer = 1;
+vector <int> tree[nax];
+/**
+ * a    : Euler array size 2 * n;
+ * L[i] : The left index of node in Euler array 
+ * R[i] : The right indx of node in Euler array
+*/
+vector <int> L(nax) , R(nax) , a(nax);
+vector <int> F(nax) , vis(nax) , depth(nax);
+vector <int> answers(nax) , color(nax);
+int LCA[nax][25];
+
+struct Query {
+    int l, r, k, idx , lca;
+    bool operator<(Query other) const
+    {
+        return make_pair(l / block_size, r) <
+               make_pair(other.l / block_size, other.r);
+    }
+};
+
+void remove(int idx){   // TODO: remove value idx from data structure
+    
+}
+void add(int idx){      // TODO: add value idx from data structure
+    
+}
+int get_answer(){       // TODO: Return the answer value
+    
+} 
+
+//  Euler DFS
+void dfs(int node , int par , int d){
+    depth[node] = d;
+    LCA[node][0] = par;
+
+    L[node] = timer;
+    a[timer] = node;
+    timer++;
+    for(int child : tree[node])
+        if(child != par)
+            dfs(child , node , d + 1);
+    R[node] = timer;
+    a[timer] = node;
+    timer++;
+}
+
+// Binary lefting
+void init(int n){
+    for(int j=1;j<25;j++){
+        for(int i=1;i<=n;i++){
+            if(LCA[i][j-1] != -1){
+                LCA[i][j] = LCA[LCA[i][j-1]][j-1];
+            }
+        }
     }
 }
+
+int getLCA(int a , int b){
+    if(depth[a] > depth[b])     swap(a , b);
+
+    int d = depth[b] - depth[a];
+    int f = 0;
+    while(d){
+        if(d&1)     b = LCA[b][f];
+
+        d >>= 1;
+        f++;
+    }
+    if(a == b){
+        return a;
+    }
+    for(int j=24;j>=0;j--){
+        if(LCA[a][j] != -1  &&  (LCA[a][j] != LCA[b][j])){
+            a = LCA[a][j];
+            b = LCA[b][j];
+        }
+    }
+    return LCA[a][0];
+}
+
+
+main : 
+        cin >> n >> q;
+
+        /* intialize
+            for(int i=0;i<=n;i++){
+                tree[i].clear();
+                vis[i] = 0;
+                F[i] = 0;
+            }
+            for(int i=0;i<=q;i++)   answers[i] = 0;
+        */
+
+        for(int i=1;i<n;i++){
+            int x , y;
+            cin >> x >> y;
+            tree[x].push_back(y);
+            tree[y].push_back(x);
+        }
+        timer = 1;
+        memset(LCA , -1);
+        // Root
+        dfs(1 , -1 , 0);
+        init(n);
+        
+        vector <Query> query;
+        block_size = (int) sqrt (n + .0) + 1;
+        for(int i=0;i<q;i++){
+            int u , v , k , lca;
+            cin >> u >> v >> k;
+            Query x;
+
+            if(L[u] > L[v])     swap(u , v);    // always start of u must be smaller than start of v
+            lca = getLCA(u , v);
+
+            /**
+             * There to type of query
+             * 1- V is in the subTree of U  ==> the query from L[u] to L[v]
+             * 2- V isn't int the subTree of U  ==> the query from L[u] to L[v] and lca
+            */
+            if(u == lca)    
+                x.l = L[u] , x.r = L[v] , x.idx = i , x.k = k , x.lca = -1;
+            else   
+                x.l = R[u] , x.r = L[v] , x.idx = i , x.k = k , x.lca = lca;
+            query.push_back(x);
+        }
+
+        sort(query.begin(),query.end());
+        int cur_l = 1 , cur_r = 0;
+        for(auto q : query) {
+            while(cur_l > q.l){
+                cur_l--;
+                add(a[cur_l]);
+            }
+            while(cur_r < q.r){
+                cur_r++;
+                add(a[cur_r]);
+            }
+            while(cur_l < q.l){
+                remove(a[cur_l]);
+                cur_l++;
+            }
+            while(cur_r > q.r){
+                remove(a[cur_r]);
+                cur_r--;
+            }
+            answers[q.idx] = get_answer();
+        }
+        for(int i=0;i<q;i++)    cout << answers[i] << endl;
 
 ==========================================================================================================================================================================
 
@@ -1474,18 +1729,19 @@ ll inline get (int l , int r){
 
 3-((2D preffix)) : 
 ******************
-vector<vector<int>> prefix2d(1100 , vector<int>(1100)) , a(1000 , vector<int> (1000));
+vector<vector<ll>> prefix2d(1100 , vector<ll>(1100)) , a(1000 , vector<ll> (1000));
 
 void generate_prefix(int n , int m){
     for (int i = 0; i < n; i++)
         for (int j = 0; j < m; j++)
-            prefix2d[i][j] = a[i][j] + prefix2d[i-1][j] + 
-                            prefix2d[i][j-1] - prefix2d[i-1][j-1];
+            prefix2d[i][j] = a[i][j] + (i - 1 >= 0 ? prefix2d[i-1][j] : 0) + 
+                            (j - 1 >= 0 ? prefix2d[i][j-1] : 0) - (i - 1 >= 0  && j - 1 >= 0 ? prefix2d[i-1][j-1] : 0);
 }
 
-int get_prefix(int x1 , int y1 , int x2 , int y2){
-    return (prefix2d[x2][y2] - prefix2d[x2][y1-1] - prefix2d[x1-1][y2] + prefix2d[x1-1][y1-1]);
+ll get_prefix(int x1 , int y1 , int x2 , int y2){
+    return (prefix2d[x2][y2] - (y1 - 1 >= 0 ? prefix2d[x2][y1-1] : 0) - (x1 - 1 >= 0 ? prefix2d[x1-1][y2] : 0) + (x1 - 1 >= 0  &&  y1 - 1 >= 0 ? prefix2d[x1-1][y1-1] : 0));
 }
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1954,6 +2210,231 @@ void del(no* & cur , int i , string& s , int n)
     {
         delete cur;
         cur = nullptr;
+    }
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+const int MAX_CHAR = 26;
+
+struct trie {
+	trie* child[MAX_CHAR];
+	bool isLeaf;
+
+	trie() {
+		memset(child, 0, sizeof(child));
+		isLeaf = 0;
+	}
+
+	void insert(char *str) {
+		if(*str == '\0')
+			isLeaf = 1;
+		else {
+			int cur = *str - 'a';
+			if(child[cur] == 0 )
+				child[cur] = new trie();
+			child[cur]->insert(str+1);
+		}
+	}
+
+	bool wordExist(char* str) {
+		if(*str == '\0')
+			return isLeaf;
+
+		int cur = *str - 'a';
+		if(child[cur] == 0 )
+			return false;	// such path don't exist
+
+		return child[cur]->wordExist(str+1);
+	}
+
+	bool prefixExist(char* str) {
+		if(*str == '\0')
+			return true;
+
+		int cur = *str - 'a';
+		if(child[cur] == 0 )
+			return false;	// such path don't exist
+
+		return child[cur]->prefixExist(str+1);
+	}
+};
+
+main():
+    trie root;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+struct node{
+	int nxt[26];
+	bool end;
+	node(){
+		end = 0;
+		memset(nxt,-1,sizeof nxt);
+	}
+};
+node v[1000000];
+int cnt = 1;
+ 
+void insert(string p){
+	int cur = 0;
+	for (int i = 0; i < p.size(); ++i){
+		if(v[cur].nxt[p[i]-'a'] == -1){
+			v[cur].nxt[p[i]-'a'] = ++cnt;
+		}
+		cur = v[cur].nxt[p[i]-'a'];
+	}
+	v[cur].end = 1;
+}
+bool search(string p){
+	int cur = 0;
+	for (int i = 0; i < p.size(); ++i){
+		if(v[cur].nxt[p[i]-'a'] == -1)
+			return false;
+		cur = v[cur].nxt[p[i]-'a'];
+	}
+	return v[cur].end;
+}
+
+
+
+VasiliysMultiset : Problem
+==========================================================================================================================================================================
+
+
+                                                                        Suffix array    
+                                                                    --------------------
+(n * (log n)^2 ) :
+******************
+const int MAXLENGTH = 5000;
+
+char str[MAXLENGTH + 1];        //the string we are building its suffix array
+int suf[MAXLENGTH + 1];         //the sorted array of suffix indices
+int group[MAXLENGTH + 1];       //In ith iteration: what is the group of the suffix index
+int tempGroup[MAXLENGTH + 1];    //temp array to build grouping of ith iteration
+
+//compare to suffixes on the first 2h chars
+struct comp{
+    int h;
+    comp(int h) : h(h) {}
+
+    bool operator()(int i, int j) {
+        if (group[i] != group[j])     // previous h-groups are different
+        return group[i] < group[j];
+        return group[i + h] < group[j + h];
+    }
+};
+
+void print_suffix(int n) {
+    for (int i = 0; i < n; i++) {
+        for (int j = suf[i]; j < n - 1; ++j)  // n-1 is string length NOT n
+            cout << str[j];
+        cout << "\t" << suf[i] << "\n";
+    }
+    cout << "\n";
+}
+
+void buildSuffixArray() {
+    int n;      //number of suffixes = 1 + len
+    //Initially assume that the group index is the ASCII
+    for (n = 0; n - 1 < 0 || str[n - 1]; n++)
+        suf[n] = n, group[n] = str[n];  //code of the first char in the suffix
+
+    sort(suf, suf + n, comp(0));        //sort the array the suf on the first char only
+    tempGroup[0] = tempGroup[n - 1] = 0;
+
+    //loop until the number of groups=number of suffixes
+    for (int h = 1; tempGroup[n - 1] != n - 1; h <<= 1) {
+        sort(suf, suf + n, comp(h));        //sort the array using the first 2h chars
+
+        for (int i = 1; i < n; i++)         //compute the 2h group data given h group data
+        tempGroup[i] = tempGroup[i - 1] + comp(h)(suf[i - 1], suf[i]);
+
+        for (int i = 0; i < n; i++)         //copy the computed groups to the group array
+        group[suf[i]] = tempGroup[i];
+
+
+    }
+    print_suffix(n);  // For print
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+(n * log n) : 
+**************
+
+const int MAXLENGTH = 2 * 100 * 1000 + 9;
+char str[MAXLENGTH + 1];            //the string we are building its suffix array
+int suf[MAXLENGTH + 1];             // the sorted array of suffix indices
+int group[MAXLENGTH + 1];           //In ith iteration: what is the group of the suffix index
+int sorGroup[MAXLENGTH + 1 < 128 ? 128 : MAXLENGTH + 1];    //temp array to build grouping of ith iteration
+
+int groupStart[MAXLENGTH + 1];      //the start index in the sorted array of the current group
+int newSuf[MAXLENGTH + 1];          //temp array to store in it the new sorted array
+int n;                              //number of suffixes
+
+void print_suffix(int suf_pos) {
+    for (int j = suf_pos; j < n - 1; ++j)  // n-1 is string length NOT n
+        cout << str[j];
+}
+
+void buildSuffixArray() {
+
+    n = 0;
+    memset(sorGroup, -1, (sizeof sorGroup[0]) * 128);
+
+    //bucket sort on the first char of suffix
+    for (n = 0; n - 1 < 0 || str[n - 1]; n++)
+        //treat sorGroup as head of linked list and newSuf as next
+        newSuf[n] = sorGroup[str[n]], sorGroup[str[n]] = n;
+
+    int numGroup = -1, j = 0;
+    for (int i = 0; i < 128; i++) {
+        //compute the groups and groupStart and starting suf
+        if (sorGroup[i] != -1) {
+            groupStart[++numGroup] = j;
+            int cur = sorGroup[i];  // cur = head
+
+            while (cur != -1) {
+                suf[j++] = cur;
+                group[cur] = numGroup;
+                cur = newSuf[cur];  // cur->next
+            }
+        }
+    }
+
+    sorGroup[0] = sorGroup[n - 1] = 0;        //assume that the first group index 0 for next iteration;
+    newSuf[0] = suf[0];                       //put the empty suffix to be the smallest suffix
+
+    //loop until the number of groups=number of suffixes
+    for (int h = 1; sorGroup[n - 1] != n - 1; h <<= 1) {
+        if (true) {  // For print
+            for (int i = 0; i < n; i++) {
+                print_suffix(suf[i]);
+
+                cout << "\t" << suf[i] << "\t" << group[suf[i]] << "\t" << groupStart[group[suf[i]]] << "\n";
+            }
+            cout << "\n";
+        }
+        for (int i = 0; i < n; i++) {   //sort using 2h in the array newSuf
+            int j = suf[i] - h;
+            if (j < 0)
+                continue;
+            newSuf[groupStart[group[j]]++] = j;
+        }
+        for (int i = 1; i < n; i++) {  //compute the 2h group data given h group data
+            bool newgroup = group[newSuf[i - 1]] < group[newSuf[i]] || (group[newSuf[i - 1]] == group[newSuf[i]] && group[newSuf[i - 1] + h] < group[newSuf[i] + h]);
+
+            sorGroup[i] = sorGroup[i - 1] + newgroup;
+            if (newgroup)
+                groupStart[sorGroup[i]] = i;
+        }
+        for (int i = 0; i < n; i++) {  //copy the data
+            suf[i] = newSuf[i];
+            group[suf[i]] = sorGroup[i];
+        }
     }
 }
 
