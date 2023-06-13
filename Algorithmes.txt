@@ -1174,7 +1174,7 @@ void remove(int idx){   // TODO: remove value idx from data structure
 void add(int idx){      // TODO: add value idx from data structure
     
 }
-int get_answer(){       // TODO: Return the answer value
+int get_answer(){       // TODO: Return the answer value ! long long || int !
     
 } 
 
@@ -1270,7 +1270,7 @@ void remove(int idx){   // TODO: remove value idx from data structure
 void add(int idx){      // TODO: add value idx from data structure
     
 }
-int get_answer(){       // TODO: Return the answer value
+int get_answer(){       // TODO: Return the answer value ! long long || int !
     
 } 
 
@@ -1456,15 +1456,15 @@ int query(int node){
 }
 
 main :
-        cin >> n;
-        for(int i=1;i<n;i++){
-            int x , y;
-            cin >> x >> y;
-            a[x].insert(y);
-            a[y].insert(x);
-        }
-        decompose(1 , -1);
-        for(int i=0;i<=n;i++)   res[i] = inf;
+    cin >> n;
+    for(int i=1;i<n;i++){
+        int x , y;
+        cin >> x >> y;
+        a[x].insert(y);
+        a[y].insert(x);
+    }
+    decompose(1 , -1);
+    for(int i=0;i<=n;i++)   res[i] = inf;
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1472,6 +1472,10 @@ main :
 ((Range Query On Trees)):
 **************************
 1- find dynamics query (min , max , sum , XOR) of Subtree
+
+/*
+*   this Templet about sum !!!
+*/
 
 #define left p<<1 , l , (l+r)>>1
 #define right p<<1|1 , ((l+r)>>1)+1 , r
@@ -1481,17 +1485,18 @@ vector <int> tree[nax] , sub(nax) , L(nax) , color(nax);
 vector <int> seg(400100) , a(100100) , lazy(400100);
 
 //  Euler DFS
-int dfs(int node , int par){
+void dfs(int node , int par){
     L[node] = timer;
-    a[timer++] = color[node];
-    
-    sub[node] = 1;
+    a[timer] = node;
+    timer++;
     for(int child : tree[node])
         if(child != par)
-            sub[node] += dfs(child , node);
-
-    return sub[node];
+            dfs(child , node);
+    R[node] = timer;
+    a[timer] = node;
+    timer++;
 }
+ 
  
 
 int build(int p , int l , int r){
@@ -1520,10 +1525,421 @@ int query (int i , int j , int p , int l , int r){
     return (query(i , j , left) + query(i , j , right)); //to change
 }
 
+int main():
+    cin >> n >> q;
+    for(int i=1;i<=n;i++)   cin >> color[i];
+    for(int i=1;i<n;i++){
+        int x , y;
+        cin >> x >> y;
+        tree[x].push_back(y);
+        tree[y].push_back(x);
+    }
+    timer = 1;
+    // Root
+    dfs(1,-1);
+    build(1,1,2*n);
+    while(q--){
+        int sub , k , x;
+        cin >> k;
+        if(k == 1){
+            cin >> sub >> x;
+            dbg(L[sub],R[sub]);
+            update(L[sub],L[sub],x,1,1,2*n);
+            update(R[sub],R[sub],x,1,1,2*n);
+        }else{
+            cin >> sub;
+            dbg(L[sub],R[sub]);
+            ll ans = query(L[sub],R[sub],1,1,2*n);
+            cout << ans / 2 << endl;
+            line;
+        }
+    }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+((Distance Queries)) :  process q queries of the form: what is the distance between nodes a and b
+**********************
+
+int n , q;
+vector <int> tree[200100];
+vector <pair<int,ll>> tree1[200100] , tree2[200100];
+
+vector <ll> depth(200100) , pre1(200100) , pre2(200100);
+ll sum = 0;
+int LCA[200100][25];
+
+//  Euler DFS
+void dfs(int node , int par , int d){
+    depth[node] = d;
+    LCA[node][0] = par;
+    for(int child : tree[node])
+        if(child != par)
+            dfs(child , node , d + 1);
+}
+
+void dfs1(int node , int par , ll counter){
+    pre1[node] = counter;
+    for(auto child : tree1[node])
+        if(child.first != par)
+            dfs1(child.first , node , counter + child.second);
+}
+
+void dfs2(int node , int par , ll counter){
+    pre2[node] = counter;
+    for(auto child : tree2[node])
+        if(child.first != par)
+            dfs2(child.first , node , counter + child.second);
+}
+
+// Binary lefting
+void init(int n){
+    for(int j=1;j<25;j++){
+        for(int i=1;i<=n;i++){
+            if(LCA[i][j-1] != -1){
+                LCA[i][j] = LCA[LCA[i][j-1]][j-1];
+            }
+        }
+    }
+}
+
+int getLCA(int a , int b){
+    if(depth[a] > depth[b])     swap(a , b);
+
+    int d = depth[b] - depth[a];
+    int f = 0;
+    while(d){
+        if(d&1)     b = LCA[b][f];
+
+        d >>= 1;
+        f++;
+    }
+    if(a == b){
+        return a;
+    }
+    for(int j=24;j>=0;j--){
+        if(LCA[a][j] != -1  &&  (LCA[a][j] != LCA[b][j])){
+            a = LCA[a][j];
+            b = LCA[b][j];
+        }
+    }
+    return LCA[a][0];
+}
+
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+    // freopen("name", "r", stdin);
+    int t = 1;
+    // cin >> t;
+    while(t--){
+        cin >> n >> q;
+
+        // intialize
+        // sum = 0;
+        // for(int i=0;i<=n;i++){
+        //     tree[i].clear();
+        //     tree1[i].clear();
+        //     tree2[i].clear();
+        //     depth[i]= pre1[i] = pre2[i] = 0;
+        //     for(int j=0;j<25;j++){
+        //         LCA[i][j] = -1;
+        //     }
+        // }
+    
+
+        for(int i=1;i<n;i++){
+            int x , y;
+            cin >> x >> y;
+            tree[x].push_back(y);
+            tree[y].push_back(x);
+            tree1[x].push_back({y,1});
+            tree1[y].push_back({x,1});
+            tree2[y].push_back({x,1});
+            tree2[x].push_back({y,1});
+            sum += 2;
+        }
+        // Root
+        dfs(1 , -1 , 0);
+        dfs1(1 , -1 , 0);
+        dfs2(1 , -1 , 0);
+        init(n);
+        while(q--){
+            int x , y;
+            cin >> x >> y;
+            int lca = getLCA(x,y);
+            ll counter = pre2[y] - pre2[lca];
+            counter += pre1[x] - pre1[lca];
+            dbg(counter);
+            printf("%lld\n", counter);
+            line;
+        }
+    }
+    return 0;
+}
+
+==========================================================================================================================================================================
+
+                                                                        DP on Tree    
+                                                                    ------------------
+Parsa has a humongous tree on n vertices.
+On each vertex v he has written two integers lvand rv.
+To make Parsa's tree look even more majestic, Nima wants to assign a number av (lv≤av≤rv) to each vertex v such that the beauty of Parsa's tree is maximized.
+Nima's sense of the beauty is rather bizarre. He defines the beauty of the tree as the sum of |au−av| over all edges (u,v) of the tree.
+Since Parsa's tree is too large, Nima can't maximize its beauty on his own. Your task is to find the maximum possible beauty for Parsa's tree.
+
+
+int n;
+vector <ll> l(100100) , r(100100) , a[100100];
+ll dp[100100][3];
+
+void dfs(int u , int par){
+
+    for(auto v : a[u]){
+        if(v == par)    continue;
+        dfs(v,u);
+    }
+
+    for(auto v : a[u]){
+        if(v == par)    continue;
+        dp[u][0] += max(abs(l[u] - l[v]) + dp[v][0] , abs(l[u] - r[v]) + dp[v][1]);
+        dp[u][1] += max(abs(r[u] - l[v]) + dp[v][0] , abs(r[u] - r[v]) + dp[v][1]);
+    }
+}
+
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+    int t = 1;
+    cin>>t;
+    while(t--){
+        cin >> n;
+        for(int i=0;i<=n;i++){
+            dp[i][0] = 0;
+            dp[i][1] = 0;
+            a[i].clear();
+        }
+        for(int i=1;i<=n;i++)    cin >> l[i] >> r[i];
+        for(int i=1;i<n;i++){
+            int x , y;
+            cin >> x >> y;
+            a[x].push_back(y);
+            a[y].push_back(x);
+        }
+        dfs(1,0);
+        ll ans = max(dp[1][0],dp[1][1]);
+        cout << ans << endl;
+        line;
+    }
+    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+((Tree Diameter)) : 
+*********************
+
+int n , ans = 0;
+vector <int> a[nax];
+int dp[200100][3];
+
+bool isLeaf(int u){
+    if(u != 1  &&  a[u].size() == 1)    return true;
+    return false;
+}
+
+void dfs(int u , int par){
+    vector <int> temp;
+
+    //  Base Case
+    if(isLeaf(u)){
+        dp[u][0] = dp[u][1] = 0;
+        return;
+    }
+
+    // Itreate
+    for(auto v : a[u]){
+        if(v == par)    continue;
+        dfs(v,u);
+        temp.push_back(dp[v][0]);
+    }
+
+    // Recerence
+    sort(temp.begin() , temp.end() , greater <int> ());
+    // the diameter start from u
+    if(temp.size() == 1){
+        dp[u][0] = 1 + temp[0];
+        dp[u][1] = 0;
+    }
+    // the go through u
+    else{
+        dp[u][0] = 1 + temp[0];
+        dp[u][1] = 2 + temp[0] + temp[1];
+    }
+
+    ans = max({ans , dp[u][0] , dp[u][1]});
+}
+
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+    int t = 1;
+    // cin>>t;
+    while(t--){
+        cin >> n;
+        if(n == 1){
+            cout << 0 << endl;
+            line;
+            continue;
+        }
+        for(int i=1;i<n;i++){
+            int x , y;
+            cin >> x >> y;
+            a[x].push_back(y);
+            a[y].push_back(x);
+        }
+        dfs(1,0);
+        cout << ans << endl;
+        line;
+    }
+    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+((Tree  Distances I)) :  determine for each node the maximum distance to another node
+***********************
+
+int n;
+vector <int> a[200100] , depth(200100) , ans(200100);
+
+void calcDepth(int u , int par){
+    // will calc the max depth between your depth and max child depth + 1 
+    int counter = 0;
+    for(auto v : a[u]){
+        if(v == par)    continue;
+        calcDepth(v , u);
+        counter = max(counter , 1 + depth[v]);
+    }
+    depth[u] = counter;
+}
+
+void solve(int src, int par, int par_ans){
+    vector<int> prefixMax, suffixMax;
+    // get depth of child nodes.
+    for(int child : a[src]){
+        if(child != par){
+            prefixMax.push_back(depth[child]);
+            suffixMax.push_back(depth[child]);
+        }
+    }
+    // build prefix and suffix
+    for(int i = 1; i < prefixMax.size(); i++)
+        prefixMax[i] = max(prefixMax[i], prefixMax[i-1]);
+    for(int i = (int)suffixMax.size() - 2; i >= 0; i--)
+        suffixMax[i] = max(suffixMax[i], suffixMax[i+1]);
+ 
+    //eval ans for every child c_no
+    int c_no = 0;
+    for(int child : a[src]){
+        if(child != par){
+            int op1 = (c_no == 0) ? INT_MIN : prefixMax[c_no - 1];
+            int op2 = (c_no == (int)suffixMax.size() - 1) ? INT_MIN : suffixMax[c_no + 1];
+            int partial_ans = 1 + max(par_ans, max(op1,op2));
+ 
+            solve(child, src, partial_ans);
+            c_no++;
+        }
+    }
+ 
+    //eval ans for src
+    ans[src] = 1 + max(par_ans, (prefixMax.empty() ? -1 : prefixMax.back()));
+}
+
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+    int t = 1;
+    // cin>>t;
+    while(t--){
+        cin >> n;
+        for(int i=1;i<n;i++){
+            int x , y;
+            cin >> x >> y;
+            a[x].push_back(y);
+            a[y].push_back(x);
+        }
+        calcDepth(1,0);
+        solve(1,0,-1);
+        for(int i=1;i<=n;i++)   cout << ans[i] << " ";
+    }
+    return 0;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+((Tree  Distances II)) :  determine for each node the sum of the distances from the node to all other nodes
+************************
+
+
+int n;
+vector <int> a[200200];
+vector <ll> sub_sz(200200) , sub_ans(200200) , ans(200200);
+
+// the answer of subtree is the answer of child subtree + subtree number of nodes
+void dfs(int u , int par){
+    ll numOfChild = 1 , subAns = 0;
+    for(auto v : a[u]){
+        if(par == v)    continue;
+        dfs(v,u);
+        numOfChild += sub_sz[v];
+        subAns += sub_sz[v] + sub_ans[v];
+    }
+    sub_sz[u] = numOfChild;
+    sub_ans[u] = subAns;
+}
+
+void solve(int u , int par , ll par_ans , int &totalNodes){
+    ans[u] = sub_ans[u] + (par_ans + (totalNodes - sub_sz[u]));
+    for(int v : a[u]){
+        if(v != par)
+            solve(v, u, ans[u] - (sub_ans[v] + sub_sz[v]), totalNodes);
+    }
+}
+
+int main()
+{
+    ios::sync_with_stdio(0);
+    cin.tie(0); cout.tie(0);
+    int t = 1;
+    // cin>>t;
+    while(t--){
+        cin >> n;
+        for(int i=1;i<n;i++){
+            int x , y;
+            cin >> x >> y;
+            a[x].push_back(y);
+            a[y].push_back(x);
+        }
+        dfs(1,0);
+        solve(1,0,0,n);
+        for(int i=1;i<=n;i++)   cout << ans[i] << " ";
+    }
+    return 0;
+}
+
+
 ==========================================================================================================================================================================
 
                                                                         DP
                                                                      --------
+
+Note : if ypu couldn't store a dimensional you can sort the array on it if max asc and if min desc
+                                                        
 1- ( Max sum in Grid ) : 
 ************************
 int n , m ;
@@ -1862,7 +2278,7 @@ int dp(int i , int  j){
 
 int setBit(int num , int idx , int value = 1) {return (value) ? (num | (1<<idx) ) : (num &~(1<<idx)) ;}
 int getBit(int num , int idx ) {return ((num >> idx) & 1) == 1 ;}
-int cntBit(int num){int cntBit(int num){return __builtin_popcount(num);}}
+int cntBit(int num){return __builtin_popcount(num);}
 
 int memo[1<<12];
 int dp(int mask){
@@ -1895,29 +2311,6 @@ int dp(int mask){
 14 - (Digit Dp) : 
 *****************
 
-#include <iostream>
-#include <bits/stdc++.h>
-#define ll long long
-#define node tuple<int,int>
-#define pi 3.14159265359
-#define inf 1e9
-#define oo 1e18+8
-#define log(x , y) log10(y)/log10(x)
-#define memset(t , x)  memset(t , x , sizeof t)
-#define fill(t , x) fill(t , t+(sizeof t/4) , x)
-#define nax (int)(1e6+6)
-#define MOD (int)(1e9+7)
-#define left 2*i
-#define right 2*i+1
-#define A(a,n) int a[n];    for(int i=0;i<n;i++)    cin>>a[i];
-#define AA(a,n) ll a[n];    for(int i=0;i<n;i++)    cin>>a[i];
-#define S(s) string s  ; cin>>s;
-#define comma(ans,n)    setprecision(n)<<fixed<<ans<<endl;
-#define coutt(x)     printf("%d\n", x);
-#define Endl    endl
-#define sortt(a)    sort(a.begin(),a.end())
-using namespace std;
-//#include "debug.cpp"
 // Bitmask
 int setBit(int num , int idx , int value = 1) {return (value) ? (num | (1<<idx) ) : (num &~(1<<idx)) ;}
 int getBit(int num , int idx ) {return ((num >> idx) & 1) == 1 ;}
@@ -2014,7 +2407,7 @@ void compress(vector<int> &vec) {
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
-Finding subsegments with the maximal sum : 
+Finding subsegments with the maximum sum : 
 ------------------------------------------
 
 struct Node {
@@ -2211,7 +2604,6 @@ struct FenwickTree {
 
 
 // to answer point update and 2d array query:
-
 struct FenwickTree2D {
     vector<vector<int>> bit;
     int n , m;
@@ -2241,7 +2633,16 @@ struct FenwickTree2D {
             for (int j = y; j < m; j = j | (j + 1))
                 bit[i][j] += delta;
     }
-};
+
+    int rectangle_query(int x1 , int y1 , int x2 , int y2){
+        int ans = query(x2,y2);
+        if(x1 - 1 >= 0)     ans -= query(x1-1,y2);
+        if(y1 - 1 >= 0)     ans -= query(x2,y1-1);
+        if(x1 - 1 >= 0  &&  y1 - 1 >= 0)    ans += query(x1-1,y1-1);
+        return ans;
+    }
+}; 
+
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2266,7 +2667,7 @@ void remove(int idx){   // TODO: remove value at idx from data structure
 void add(int idx){      // TODO: add value at idx from data structure
     
 }
-int get_answer(){  } // TODO: Return the answer value
+int get_answer(){  }    // TODO: Return the answer value ! long long || int !
 
 main : 
 
@@ -2351,15 +2752,25 @@ cout<<counter<<endl;
 3 - ((Maximum Subarray Sum)) :
 ******************************
 int n;
-cin>>n;
+cin >> n;
 vector <ll> a(n);
-for(int i=0;i<n;i++)    cin>>a[i];
+for(int i=0;i<n;i++)    cin >> a[i];
 ll last = -oo , maxi = -oo;
+int start = 0, end = -1, s = 0;
 for(int i=0;i<n;i++){
+    if (last + a[i] < a[i]) {
+        s = i;
+    }
     last = max(last+a[i],a[i]);
-    maxi = max(maxi,last);
+    if (last > maxi) {
+        maxi = last;
+        start = s;
+        end = i;
+    }
 }
-cout<<maxi<<endl;
+cout << maxi << endl;
+dbg(start,end);
+line;
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2478,6 +2889,31 @@ for(int i=0;i<n;i++){
     mp[pre[i]]++;
 }
 cout<<counter<<endl;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+(( Get the first element that (bigger ||  smaller) than you from right and left by stack )) :
+*********************************************************************************************
+/*
+*   this for bigger (not bigger or equal) if you want smaller change the operation 
+*/
+vector <int> R(n,-1) , L(n,-1);
+stack <int> st;
+for(int i=0;i<n;i++){
+    while (!st.empty() && a[st.top()] < a[i]) {
+        R[st.top()] = i;
+        st.pop();
+    }
+    st.push(i);
+}
+while(st.size() > 0)    st.pop();
+for(int i=n-1;i>=0;i--){
+    while (!st.empty() && a[st.top()] < a[i]) {
+        L[st.top()] = i;
+        st.pop();
+    }
+    st.push(i);
+}
 
 ==========================================================================================================================================================================
 
@@ -2863,123 +3299,3 @@ void buildSuffixArray() {
 
 
 ==========================================================================================================================================================================
-
-
-                                                                        DP on Tree    
-                                                                    ------------------
-
-int n;
-vector <ll> l(100100) , r(100100) , a[100100];
-ll dp[100100][3];
-
-void dfs(int u , int par){
-
-    for(auto v : a[u]){
-        if(v == par)    continue;
-        dfs(v,u);
-    }
-
-    for(auto v : a[u]){
-        if(v == par)    continue;
-        dp[u][0] += max(abs(l[u] - l[v]) + dp[v][0] , abs(l[u] - r[v]) + dp[v][1]);
-        dp[u][1] += max(abs(r[u] - l[v]) + dp[v][0] , abs(r[u] - r[v]) + dp[v][1]);
-    }
-}
-
-int main()
-{
-    ios::sync_with_stdio(0);
-    cin.tie(0); cout.tie(0);
-    int t = 1;
-    cin>>t;
-    while(t--){
-        cin >> n;
-        for(int i=0;i<=n;i++){
-            dp[i][0] = 0;
-            dp[i][1] = 0;
-            a[i].clear();
-        }
-        for(int i=1;i<=n;i++)    cin >> l[i] >> r[i];
-        for(int i=1;i<n;i++){
-            int x , y;
-            cin >> x >> y;
-            a[x].push_back(y);
-            a[y].push_back(x);
-        }
-        dfs(1,0);
-        ll ans = max(dp[1][0],dp[1][1]);
-        cout << ans << endl;
-        line;
-    }
-    return 0;
-}
-
-//////////////////////////////////////////////////////////////////////////////////////////////////
-
-((Tree Diameter)) : 
-*********************
-
-int n , ans = 0;
-vector <int> a[nax];
-int dp[200100][3];
-
-bool isLeaf(int u){
-    if(u != 1  &&  a[u].size() == 1)    return true;
-    return false;
-}
-
-void dfs(int u , int par){
-    vector <int> temp;
-
-    //  Base Case
-    if(isLeaf(u)){
-        dp[u][0] = dp[u][1] = 0;
-        return;
-    }
-
-    // Itreate
-    for(auto v : a[u]){
-        if(v == par)    continue;
-        dfs(v,u);
-        temp.push_back(dp[v][0]);
-    }
-
-    // Recerence
-    sort(temp.begin() , temp.end() , greater <int> ());
-    if(temp.size() == 1){
-        dp[u][0] = 1 + temp[0];
-        dp[u][1] = 0;
-    }
-    else{
-        dp[u][0] = 1 + temp[0];
-        dp[u][1] = 2 + temp[0] + temp[1];
-    }
-
-    ans = max({ans , dp[u][0] , dp[u][1]});
-}
-
-int main()
-{
-    ios::sync_with_stdio(0);
-    cin.tie(0); cout.tie(0);
-    int t = 1;
-    // cin>>t;
-    while(t--){
-        cin >> n;
-        if(n == 1){
-            cout << 0 << endl;
-            line;
-            continue;
-        }
-        for(int i=1;i<n;i++){
-            int x , y;
-            cin >> x >> y;
-            a[x].push_back(y);
-            a[y].push_back(x);
-        }
-        dfs(1,0);
-        cout << ans << endl;
-        line;
-    }
-    return 0;
-}
