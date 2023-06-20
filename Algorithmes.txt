@@ -1,4 +1,4 @@
-// freopen("name", "r", stdin)
+// freopen("name", "r", stdin);
 
 #define node tuple<int,int>
 #define pi 3.14159265359
@@ -128,6 +128,7 @@ printf("%d %d\n%d %d\n", j, i, n - j + 1, m - i + 1);
       }
     3 - n mod x = y mod n
         if(x > y)   n = (x + y)
+    4 - x1 % n = x2 % n  ==>  x1 - x2 % n = 0
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 ((Fast Power)) : 
@@ -274,14 +275,21 @@ void PreCalcMod()
 
                                                                            Graph
                                                                         -----------
+
 //       R   L   D    U
 int X[]={0 , 0 , 1 , -1};
 int Y[]={1 , -1 , 0 , 0};
+
+//          S   SE  E    NE   N    NW   W    SW
+int dx[] = {1 , 1 , 0 , -1 , -1 , -1 ,  0 ,  1};
+int dy[] = {0 , 1 , 1 ,  1 ,  0 , -1 , -1 , -1};
+
 for(int k=0;k<4;k++){
     int x = i + X[k];
     int y = j + Y[k];
     if(x > 0  &&  x <= n  &&  y > 0  &&  y <= m  &&  !vis[x][y])    dfs(x,y);
 }
+
 (( DFS )) : 
 ***********
     int vis[nax];
@@ -1496,8 +1504,6 @@ void dfs(int node , int par){
     a[timer] = node;
     timer++;
 }
- 
- 
 
 int build(int p , int l , int r){
     if(l==r) return seg[p] = a[l];
@@ -2043,6 +2049,8 @@ int dp (int i , int  prev){
     return memo[i][prev] = max(sum1,sum2);
 }
 
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
 LIS with binary search :        O(n*log(n))
 ------------------------
 int n , dp[200001] , bs[200001] , a[200001] , ans = 0;
@@ -2356,7 +2364,7 @@ int main()
 }
 
 ==========================================================================================================================================================================
-                                                                        Segment-Tree
+                                                                        Range-Queries
                                                                      -------------------
 1- ((Segment Tree)) :
 *********************                                                                     
@@ -2414,8 +2422,8 @@ struct Node {
     ll sum, pref, suff, ans;
 };
 
-vector <Node> seg(200008);
-vector <ll> a(50002);
+vector <Node> seg(4*100100);
+vector <ll> a(100100);
 int n , q;
 
 Node combine(Node l, Node r) {
@@ -2917,7 +2925,7 @@ for(int i=n-1;i>=0;i--){
 
 ==========================================================================================================================================================================
 
-                                                                            Math    
+                                                                         Math CSES   
                                                                         ------------
 1 - ((Common Divisors)) :   get the gcd for all pair in array and get the maximum
 *************************
