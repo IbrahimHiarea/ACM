@@ -400,7 +400,7 @@ void floyd(){
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
-(( Dijkstra )) : be carefull about the node(tuple) ll or int and the array D
+(( Dijkstra )) : be careful about the node(tuple) ll or int and the array D
 ****************
 
 #define node tuple<int,int>
@@ -472,6 +472,9 @@ void floyd(){
 (( Bipartite Graph )) : 
 ***********************
 
+    // Note : this algorithm can check if the Undirected graph has an odd cycle it will return false
+
+
     bool is_bipartite = true;
     vector <int> color(nax,-1);
 
@@ -492,6 +495,58 @@ void floyd(){
             }
         }
     }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
+(( SCG strongly connected components )) : 
+***********************
+
+    int n , m , componentNumber = -1;
+    vector <int> vis1(100100) , vis2(100100);
+    vector <int> a[100100] , a_rev[100100] , component;
+    deque <int> order;
+
+    void dfs1(int u) {
+        vis1[u] = 1;
+        for (auto v : a[u])
+            if (!vis1[v])
+                dfs1(v);
+        order.push_front(u);
+    }
+
+    void dfs2(int u) {
+        vis2[u] = 1;
+        component.push_back(cost[u]);
+
+        for (auto v : a_rev[u])
+            if (!vis2[v])
+                dfs2(v);
+    }
+
+    main :
+        in >> n;
+        for(int i=1;i<=n;i++)    cin >> cost[i];
+        cin >> m;
+        for(int i=0;i<m;i++){
+            int x , y;
+            cin >> x >> y;
+            a[x].push_back(y);
+            a_rev[y].push_back(x);
+        }
+        for(int i=1;i<=n;i++){
+            if(!vis1[i])
+                dfs1(i);
+        }
+        while(order.size() > 0){
+            int node = order.front();
+            order.pop_front();
+            if(!vis2[node]){
+                componentNumber ++ ;
+                dfs2(node);
+                // do what ever you want bitch
+            }
+            component.clear();
+        }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -1477,6 +1532,55 @@ main :
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
+((calc the centroid of tree)) : 
+*******************************
+// Note : could be one node or two
+
+vector <int> a[200100];
+vector <int> sub(200100);
+// Calc the size of each node
+int dfs1(int node , int par){
+    sub[node] = 1;
+    for(auto v : a[node]){
+        if(v != par){
+            sub[node] += dfs1(v , node);
+        }
+    }
+    return sub[node];   
+}
+
+    main : 
+        cin >> n;
+        for(int i=1;i<=n;i++){
+            a[i].clear();
+            sub[i] = 0;
+        }
+        for(int i=1;i<n;i++){
+            int x , y;
+            cin >> x >> y;
+            a[x].push_back(y);
+            a[y].push_back(x);
+        }
+        dfs1(1,0);
+        vector <int> centroid;
+        int mini = n;
+        for(int i=1;i<=n;i++){
+            int maxi = 0;
+            for(auto v : a[i]){
+                if(sub[v] > sub[i])     maxi = max(maxi , n - sub[i]);
+                else                    maxi = max(maxi , sub[v]);
+            }
+            if(maxi < mini){
+                mini = maxi;
+                centroid.clear();
+                centroid.push_back(i);
+            }else if(maxi == mini){
+                centroid.push_back(i);
+            }
+        }
+
+///////////////////////////////////////////////////////////////////////////////////////////////////
+
 ((Range Query On Trees)):
 **************************
 1- find dynamics query (min , max , sum , XOR) of Subtree
@@ -2364,7 +2468,7 @@ int main()
 }
 
 ==========================================================================================================================================================================
-                                                                        Range-Queries
+                                                                        Range Queries
                                                                      -------------------
 1- ((Segment Tree)) :
 *********************                                                                     
@@ -2503,6 +2607,92 @@ int query (int i , int j , int p , int l , int r , int val){
     }
     return (query(i , j , left , val) + query(i , j , right , val)); //to change
 }
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+
+Dynamic Segment Tree : 
+----------------------
+
+#define left l , (l+r)>>1
+#define right ((l+r)>>1)+1 , r
+ 
+struct DynamicSegTree{
+    struct Vertex {
+        int value , lazy , l , r;
+        Vertex *lChild, *rChild;    
+ 
+        Vertex(int value , int l , int r) : 
+            lChild(nullptr), rChild(nullptr), 
+            value(value), lazy(0) , l(l) , r(r){}
+ 
+        void extend() {
+            if(lChild==nullptr){
+                lChild = new Vertex(0 , left);
+                rChild = new Vertex(0 , right);
+            }
+        }
+    };
+    Vertex *root;
+    int n;
+ 
+    DynamicSegTree(int n) : n(n){
+        root = new Vertex(0 , 0 , n);
+    }
+ 
+    void push(Vertex *p){
+        if(!(p->lazy)) return;
+        //product in size of segment if you want all element to inc
+        p->lChild->value+=p->lazy; p->rChild->value+=p->lazy;
+        p->lChild->lazy+=p->lazy;  p->rChild->lazy+=p->lazy;
+        p->lazy = 0;
+    }
+ 
+    void update(int i , int j , int val){
+        update(i , j , val , root);
+    }
+ 
+    int update(int i , int j , int val , Vertex *p){
+        if(j<p->l || p->r<i) return p->value;
+        if(i<=p->l && p->r<=j){
+            p->lazy+=val; //to change
+            p->value+=val; //to change
+            return p->value;
+        }
+        p->extend(); push(p);
+        return p->value = (update(i , j , val , p->lChild) +
+                             update(i , j , val , p->rChild)); //to change
+    }
+ 
+    int query(int i , int j){
+        return query(i , j , root);
+    }
+ 
+    int query(int i , int j , Vertex *p){
+        if(j<p->l || p->r<i) return 0; //to change
+        if(i<=p->l && p->r<=j) return p->value;
+        p->extend(); push(p);
+        return (query(i , j , p->lChild) + query(i , j , p->rChild)); //to change
+    }
+};
+ 
+ 
+vector<Edge> edge;
+vector<pair<int ,ll>> adj[100100];
+ll ans = 0 , k ,l;
+ 
+void dfs(int u , int parent , DynamicSegTree &seg){
+    for(auto [v , w] : adj[u]){
+        if(v!=parent){
+            int count = seg.query(0 , w-1);
+            if(count < k) ans = max(ans , w);
+            seg.update(w , w , 1);
+            dfs(v , u , seg);
+            seg.update(w , w , -1);
+        }
+    }
+}
+
+DynamicSegTree seg = DynamicSegTree(1000000010);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -2779,6 +2969,10 @@ for(int i=0;i<n;i++){
 cout << maxi << endl;
 dbg(start,end);
 line;
+
+/////
+last = max(last+a[i],a[i]);
+maxi = max(maxi,last);
 
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
