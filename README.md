@@ -38,10 +38,6 @@ Apart from algorithms and data structures, this repository also provides additio
 
 Contributions are welcome! If you have any improvements, new algorithms, or data structures to add, please feel free to submit a pull request. Please ensure that your code follows the established coding conventions and includes proper documentation.
 
-## License
-
-This repository is licensed under the MIT License.
-
 ## Acknowledgements
 
 We would like to express our gratitude to the open-source community for their invaluable contributions and the wealth of knowledge they have shared.
